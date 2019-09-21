@@ -29,12 +29,15 @@ const (
 )
 
 var (
-	OkConnect       = &ConnectAction{Action: ConnectAccept, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
-	MitmConnect     = &ConnectAction{Action: ConnectMitm, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
-	HTTPMitmConnect = &ConnectAction{Action: ConnectHTTPMitm, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
-	RejectConnect   = &ConnectAction{Action: ConnectReject, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
-	httpsRegexp     = regexp.MustCompile(`^https:\/\/`)
-	certsCacheMap   = make(map[string]*tls.Certificate)
+	OkConnect               = &ConnectAction{Action: ConnectAccept, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
+	MitmConnect             = &ConnectAction{Action: ConnectMitm, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
+	HTTPMitmConnect         = &ConnectAction{Action: ConnectHTTPMitm, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
+	RejectConnect           = &ConnectAction{Action: ConnectReject, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
+	httpsRegexp             = regexp.MustCompile(`^https:\/\/`)
+	certsCacheMap           = make(map[string]*tls.Certificate)
+	HandshakeFailedCallback = func(h string) {
+
+	}
 )
 
 type ConnectAction struct {
@@ -182,6 +185,7 @@ func (proxy *ProxyHttpServer) handleHttps(w http.ResponseWriter, r *http.Request
 			//TODO: cache connections to the remote website
 			rawClientTls := tls.Server(proxyClient, tlsConfig)
 			if err := rawClientTls.Handshake(); err != nil {
+				HandshakeFailedCallback(r.Host)
 				ctx.Warnf("Cannot handshake client %v %v", r.Host, err)
 				return
 			}
