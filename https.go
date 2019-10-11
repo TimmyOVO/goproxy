@@ -35,7 +35,7 @@ var (
 	RejectConnect           = &ConnectAction{Action: ConnectReject, TLSConfig: TLSConfigFromCA(&GoproxyCa)}
 	httpsRegexp             = regexp.MustCompile(`^https:\/\/`)
 	certsCacheMap           = make(map[string]*tls.Certificate)
-	HandshakeFailedCallback = func(h string) {
+	HandshakeFailedCallback = func(h string, e error) {
 
 	}
 )
@@ -185,7 +185,7 @@ func (proxy *ProxyHttpServer) handleHttps(w http.ResponseWriter, r *http.Request
 			//TODO: cache connections to the remote website
 			rawClientTls := tls.Server(proxyClient, tlsConfig)
 			if err := rawClientTls.Handshake(); err != nil {
-				HandshakeFailedCallback(r.Host)
+				HandshakeFailedCallback(r.Host, err)
 				ctx.Warnf("Cannot handshake client %v %v", r.Host, err)
 				return
 			}
